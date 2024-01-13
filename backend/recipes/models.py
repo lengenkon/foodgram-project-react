@@ -55,6 +55,7 @@ class IngredientIndividual(models.Model):
     recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE)
     amount = models.IntegerField(
         'Количество',
+        validators=[MinValueValidator(1, message="Минимум - 1 единица")]
     )
 
 

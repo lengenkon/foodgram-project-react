@@ -1,0 +1,17 @@
+#!/bin/bash
+
+python manage.py shell -c "
+from django.contrib.auth import get_user_model
+User = get_user_model()
+user=User.objects.create_user(
+email='admin1@support.com',
+username='lena',
+first_name='ad',
+last_name='min',
+password='verystr000ngpass!')
+user.is_superuser=True
+user.is_staff=True
+user.save()" || exit 1
+
+
+python manage.py runserver

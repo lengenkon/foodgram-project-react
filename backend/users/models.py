@@ -5,6 +5,9 @@ from django.db import models
 class CustomUser(AbstractUser):
     """Переопределенная модель пользователя."""
 
+    first_name = models.CharField("first name", max_length=150)
+    last_name = models.CharField("last name", max_length=150)
+
     # class Roles(models.TextChoices):
     #     USER = 'user'
     #     MODERATOR = 'moderator'
