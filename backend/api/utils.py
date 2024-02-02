@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from recipes.models import Tag, Ingredient, Recipe, Follow, IngredientIndividual, RecipeTag, Favorites, ShoppingList
+
 
 
 def validation_field(recipe, data, field, model, through_model):    
@@ -71,4 +73,47 @@ def validation_field_tags(recipe, data, field, model, through_model, method='POS
     else:
         raise serializers.ValidationError(
             {'tags': ['Обязательное поле']})
+    
+    
+def validate_tags(tags):
+    if not tags:
+        raise serializers.ValidationError({'tags': ['Обязательное поле']})
+    tag_list = []
+    for tag in tags:
+        try:
+            tag = Tag.objects.get(id=tag)
+        except Tag.DoesNotExist:
+            raise serializers.ValidationError(
+                {'tags': 'Нет такого ингредиента!'})
+        if tag in tag_list:
+            raise serializers.ValidationError(
+                {'tags': ['Этот tag уже добавлен в этот рецепт!']})
+        tag_list.append(tag)
+    return tag_list
+
+
+def validate_field(data, model, field, model_through):
+    if not data:
+        raise serializers.ValidationError({field: ['Обязательное поле']})
+    instance_list = []
+    for element in data:
+        if isinstance(element, dict):
+            id = element['id']
+            obj = model_through.objects.get(id=id)
+            id = getattr(obj, field).id
+            if int(element['amount']) <= 0:
+                raise serializers.ValidationError({'amount': ['Количество должно быть больше 0']})
+        else:
+            id = element
+        try:
+            instance = model.objects.get(id=int(id))
+        except model.DoesNotExist:
+            raise serializers.ValidationError(
+                {field: 'Нет такого ингредиента!'})
+        if instance in instance_list:
+            raise serializers.ValidationError(
+                {field: ['Уже добавлен в этот рецепт!']})
+        instance_list.append(instance)
+    return instance_list
+            
 

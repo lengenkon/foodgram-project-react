@@ -1,10 +1,8 @@
-import colorfield
-from django import forms
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinValueValidator
 from colorfield.fields import ColorField
-# from colorful.widgets import ColorPickerWidget
+
 
 User = get_user_model()
 
@@ -19,9 +17,7 @@ class Tag(models.Model):
         max_length=32,
         unique=True,
     )
-    # color = forms.CharField(widget=ColorPickerWidget)
     color = ColorField(default='#FF0000')
-    # цветовой код
 
     class Meta:
         verbose_name = 'тег'
@@ -38,7 +34,7 @@ class Ingredient(models.Model):
     )
     measurement_unit = models.CharField(
         'Едиинца измерения',
-        max_length=8,
+        max_length=32,
         default='кг'
     )
 
@@ -48,7 +44,7 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class IngredientIndividual(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
@@ -58,14 +54,35 @@ class IngredientIndividual(models.Model):
         validators=[MinValueValidator(1, message="Минимум - 1 единица")]
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'ingredient',
+                    'recipe',
+                ],
+                name='unique_recipe_ingredient'
+            )
+        ]
+
 
 class RecipeTag(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'tag',
+                    'recipe',
+                ],
+                name='unique_recipe_tag'
+            )
+        ]
+
 
 class Recipe(models.Model):
-    """Модель для хранения рецептов."""
 
     name = models.CharField(
         'Название',
@@ -74,7 +91,6 @@ class Recipe(models.Model):
     text = models.TextField(
         'Описание',
         max_length=1024,
-        blank=True,
     )
     cooking_time = models.IntegerField(
         'Время приготовления',
@@ -82,14 +98,14 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         upload_to='posts/', null=True, blank=True
-    )  # поле для картинки
+    )
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='recipes'
     )
     tags = models.ManyToManyField(
         Tag, related_name='tags', through='RecipeTag')
     ingredients = models.ManyToManyField(
-        Ingredient, through='IngredientIndividual')
+        Ingredient, through='IngredientIndividual', related_name='ingredients')
     is_favorities = models.ManyToManyField(
         User, through='Favorites', related_name='favorites_recipes')
     is_shopping_list = models.ManyToManyField(
@@ -101,7 +117,7 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
@@ -121,13 +137,11 @@ class Follow(models.Model):
 class Favorites(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        # related_name='follow'
         )
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
-        # related_name='following'
         )
-    
+
     class Meta:
         verbose_name = 'избранное'
         verbose_name_plural = 'Избранное'
@@ -136,7 +150,6 @@ class Favorites(models.Model):
 class ShoppingList(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        # related_name='follow'
         )
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
