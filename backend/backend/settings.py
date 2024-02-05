@@ -10,17 +10,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key)
 
-# SECRET_KEY = 'django-insecure-l0pmtqmx%0pt5c@%sfn1jcpb-9%gyc!$=31u##)-u9s_c)utd5'
-
 DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split()
-# ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 STATIC_URL = '/static/'
-# Указываем корневую директорию для сборки статических файлов;
-# в контейнере это будет /app/collected_static
-STATIC_ROOT = BASE_DIR / 'collected_static'
+
+STATIC_ROOT = '/backend_static/static/'
 
 MEDIA_URL = '/media/'
 
@@ -139,7 +135,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': (
         'rest_framework.pagination.PageNumberPagination'),
-    'PAGE_SIZE': 5,
+    'PAGE_SIZE': 6,
 }
 
 DJOSER = {

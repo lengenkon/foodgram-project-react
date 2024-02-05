@@ -1,8 +1,7 @@
-from django.contrib.auth import get_user_model
-from django.db import models
-from django.core.validators import MinValueValidator
 from colorfield.fields import ColorField
-
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
+from django.db import models
 
 User = get_user_model()
 
@@ -55,6 +54,8 @@ class IngredientIndividual(models.Model):
     )
 
     class Meta:
+        verbose_name = 'ингредиент определенного рецепта'
+        verbose_name_plural = 'Ингредиенты определенного рецепта'
         constraints = [
             models.UniqueConstraint(
                 fields=[
@@ -66,24 +67,7 @@ class IngredientIndividual(models.Model):
         ]
 
 
-class RecipeTag(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-    recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=[
-                    'tag',
-                    'recipe',
-                ],
-                name='unique_recipe_tag'
-            )
-        ]
-
-
 class Recipe(models.Model):
-
     name = models.CharField(
         'Название',
         max_length=200,
@@ -97,16 +81,21 @@ class Recipe(models.Model):
         validators=[MinValueValidator(1, message="Минимум - 1 минута")]
     )
     image = models.ImageField(
+        'Картинка',
         upload_to='posts/', null=True, blank=True
     )
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='recipes'
     )
+    created_at = models.DateTimeField(
+        'Дата и время создания',
+        auto_now_add=True,
+    )
     tags = models.ManyToManyField(
-        Tag, related_name='tags', through='RecipeTag')
+        Tag, related_name='tags')
     ingredients = models.ManyToManyField(
         Ingredient, through='IngredientIndividual', related_name='ingredients')
-    is_favorities = models.ManyToManyField(
+    is_favorited = models.ManyToManyField(
         User, through='Favorites', related_name='favorites_recipes')
     is_shopping_list = models.ManyToManyField(
         User, through='ShoppingList', related_name='recipes_in_shopping_list')
@@ -119,28 +108,13 @@ class Recipe(models.Model):
         return self.name
 
 
-class Follow(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="following")
-    following = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="followers")
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'following'],
-                name='unique_following',
-            )
-        ]
-
-
 class Favorites(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        )
+    )
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
-        )
+    )
 
     class Meta:
         verbose_name = 'избранное'
@@ -150,10 +124,10 @@ class Favorites(models.Model):
 class ShoppingList(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
-        )
+    )
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE,
-        )
+    )
 
     class Meta:
         verbose_name = 'список покупок'

@@ -1,28 +1,24 @@
-from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, viewsets
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
-from recipes.models import (
-    Recipe, Tag, Follow, Ingredient,
-    IngredientIndividual, ShoppingList, Favorites)
-from rest_framework.response import Response
-from .permissions import OwnerOrReadOnly, OwnerOnly
-from .serializers import (
-    RecipeCreateSerializer, RecipeGetSerializer, TagSerializer,
-    FollowCreateSerializer, ShoppingListSerializer, FavoritesSerializer,
-    IngredientSerilizer
-)
+from django.contrib.auth import get_user_model
 from django.http import FileResponse
-from .filters import RecipeFilter
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from users.serializers import CustomUserSerializer
-from django.contrib.auth import get_user_model
-# from rest_framework.generics import get_object_or_404
-from rest_framework.status import (
-    HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT, HTTP_201_CREATED)
+from recipes.models import (Favorites, Ingredient, IngredientIndividual,
+                            Recipe, ShoppingList, Tag)
+from rest_framework import filters, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
+                                   HTTP_400_BAD_REQUEST)
+from users.models import Follow
+from users.serializers import CustomUserSerializer
 
+from .filters import RecipeFilter
+from .permissions import OwnerOnly, OwnerOrReadOnly
+from .serializers import (FavoritesSerializer, FollowSerializer,
+                          IngredientSerilizer, RecipeGetSerializer,
+                          ShoppingListSerializer, TagSerializer)
 
 User = get_user_model()
 
@@ -30,7 +26,6 @@ User = get_user_model()
 class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
-    pagination_class = LimitOffsetPagination
 
     def get_permissions(self):
         if (self.action == 'me') and (
@@ -50,7 +45,7 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscribe(self, request, id=None):
         following = get_object_or_404(User, pk=id)
-        serializer = FollowCreateSerializer(
+        serializer = FollowSerializer(
             data={"user": request.user, "following": following},
             context={'request': request, 'pk': id})
         serializer.is_valid(raise_exception=True)
@@ -83,10 +78,10 @@ class CustomUserViewSet(UserViewSet):
             user=self.request.user)
         page = self.paginate_queryset(following)
         if page is not None:
-            serializer = FollowCreateSerializer(
+            serializer = FollowSerializer(
                 page, many=True, context={'request': request})
             return self.get_paginated_response(serializer.data)
-        serializer = FollowCreateSerializer(
+        serializer = FollowSerializer(
             following, many=True, context={'request': request})
         return Response(
             serializer.data,
@@ -94,17 +89,16 @@ class CustomUserViewSet(UserViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all().select_related(
+        'author').prefetch_related(
+            'tags',
+            'ingredients',
+            'is_favorited',
+            'is_shopping_list').order_by('-created_at')
     serializer_class = RecipeGetSerializer
     permission_classes = (OwnerOrReadOnly, )
-    pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-
-    # def get_serializer_class(self):
-    #     if self.action == 'list' or self.action == 'retrieve':
-    #         return RecipeGetSerializer
-    #     return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(
@@ -175,7 +169,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             Recipe,
             pk=pk)
         if Favorites.objects.filter(recipe=recipe, user=request.user).exists():
-            # recipe = Recipe.objects.get(pk=pk)
             instance = Favorites.objects.get(recipe=recipe, user=request.user)
             instance.delete()
             return Response(status=HTTP_204_NO_CONTENT)
@@ -192,10 +185,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=False,
     )
     def download_shopping_cart(self, request):
-        # print(os.path.abspath('.'))
-
-        # file_path = "{}data.txt".format(STATIC_URL)
-        # with open(file_path, 'w', encoding='utf-8') as file:
         filename = 'test.txt'
         filepath = 'static/data/' + filename
         sourceFile = open(filepath, 'w', encoding='utf-8')
@@ -218,34 +207,9 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
-class FollowViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
-                    viewsets.GenericViewSet):
-    # НИГДЕ НЕ ИСПОЛЬЗУЕТСЯ
-    pagination_class = LimitOffsetPagination
-    # serializer_class = FollowSerializer
-    permission_classes = (IsAuthenticated, )
-    filter_backends = (filters.SearchFilter, )
-    search_fields = ('following__username',)
-
-    def get_queryset(self):
-        return Follow.objects.select_related('following').filter(
-            user=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
-    # queryset = Ingredient.objects.all()
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerilizer
     filter_backends = (filters.SearchFilter, )
-    # не работает
-    # search_fields = ('name', )
+    search_fields = ('name', )
     pagination_class = None
-
-    def get_queryset(self):
-        queryset = Ingredient.objects.all()
-        name = self.request.query_params.get('name', None)
-        if name is not None:
-            queryset = queryset.filter(name__istartswith=name)
-        return queryset

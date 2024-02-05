@@ -1,20 +1,18 @@
-from django.contrib import admin
-from .models import (
-    Follow, Ingredient, Tag, Recipe,
-    IngredientIndividual, ShoppingList, RecipeTag)
-from django.contrib.auth import get_user_model
 from itertools import chain
+
+from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
+from users.models import Follow
+
+from .models import (Favorites, Ingredient, IngredientIndividual, Recipe,
+                     ShoppingList, Tag)
 
 User = get_user_model()
 
 
 class IngredientIndividualInline(admin.TabularInline):
     model = IngredientIndividual
-    extra = 1
-
-
-class RecipeTagInline(admin.TabularInline):
-    model = RecipeTag
     extra = 1
 
 
@@ -25,16 +23,14 @@ class FollowAdmin(admin.ModelAdmin):
         'following'
     )
     search_fields = ('following',)
-    # list_display_links = ('user',)
 
 
-class UserAdmin(admin.ModelAdmin):
-    list_display = (
-        'username', 'last_name', 'id'
-    )
+class UserAdmin(UserAdmin):
+    list_filter = ('first_name', 'email')
 
 
 class IngredientAdmin(admin.ModelAdmin):
+    list_filter = ('name', )
     inlines = (IngredientIndividualInline,)
     list_display = (
         'name', 'measurement_unit', 'id'
@@ -53,15 +49,21 @@ class IngredientIndividualAdmin(admin.ModelAdmin):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    inlines = (IngredientIndividualInline, RecipeTagInline)
+    list_display = (
+        'name', 'author', 'ingredient_for_recipe',
+        'id', 'number_of_favorites'
+    )
+    list_filter = ('name', 'author', 'tags')
+    inlines = (IngredientIndividualInline, )
+    ordering = ('-created_at', )
 
     def ingredient_for_recipe(self, obj):
-        a = obj.ingredients.values_list('name')
-        return list(chain.from_iterable(a))
+        ingredients = obj.ingredients.values_list('name')
+        return list(chain.from_iterable(ingredients))
 
-    list_display = (
-        'name', 'author', 'ingredient_for_recipe', 'id'
-    )
+    def number_of_favorites(self, obj):
+        count = Favorites.objects.filter(recipe=obj).count()
+        return count
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -71,6 +73,12 @@ class TagAdmin(admin.ModelAdmin):
 
 
 class ShoppingListAdmin(admin.ModelAdmin):
+    list_display = (
+        'recipe', 'id', 'user'
+    )
+
+
+class FavoritesAdmin(admin.ModelAdmin):
     list_display = (
         'recipe', 'id', 'user'
     )
@@ -88,6 +96,6 @@ admin.site.register(Follow, FollowAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(IngredientIndividual, IngredientIndividualAdmin)
 admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(RecipeTag, RecipeTagAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(ShoppingList, ShoppingListAdmin)
+admin.site.register(Favorites, FavoritesAdmin)
