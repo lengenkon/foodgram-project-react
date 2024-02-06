@@ -3,17 +3,19 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
+MAX_lENGHT_TAG = 32
 User = get_user_model()
 
 
 class Tag(models.Model):
     name = models.CharField(
         'Название',
-        max_length=32,
+        max_length=MAX_lENGHT_TAG,
+        unique=True,
     )
     slug = models.SlugField(
         'Идентификатор',
-        max_length=32,
+        max_length=MAX_lENGHT_TAG,
         unique=True,
     )
     color = ColorField(default='#FF0000')
