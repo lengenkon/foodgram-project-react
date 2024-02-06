@@ -22,19 +22,3 @@ class CustomUserSerializer(UserSerializer):
             return Follow.objects.filter(
                 following=obj.id, user=current_user.id).exists()
         return False
-
-
-class CustomUserCreateSerializer(UserSerializer):
-
-    class Meta:
-        model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name',
-                  'password')
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        password = validated_data.pop('password')
-        instance = super().create(validated_data)
-        instance.set_password(password)
-        instance.save()
-        return instance
