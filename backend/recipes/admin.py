@@ -14,6 +14,7 @@ User = get_user_model()
 class IngredientIndividualInline(admin.TabularInline):
     model = IngredientIndividual
     extra = 1
+    min_num = 1
 
 
 class FollowAdmin(admin.ModelAdmin):
@@ -23,10 +24,6 @@ class FollowAdmin(admin.ModelAdmin):
         'following'
     )
     search_fields = ('following',)
-
-
-class UserAdmin(UserAdmin):
-    list_filter = ('first_name', 'email')
 
 
 class IngredientAdmin(admin.ModelAdmin):
@@ -91,7 +88,6 @@ class RecipeTagAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(User, UserAdmin)
 admin.site.register(Follow, FollowAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(IngredientIndividual, IngredientIndividualAdmin)
