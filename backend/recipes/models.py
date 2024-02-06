@@ -4,6 +4,13 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 MAX_lENGHT_TAG = 32
+MIN_VALUE = 1
+MAX_VALUE_AMOUNT = 32000
+MAX_VALUE_TIME = 32000
+MAX_LENGHT_NAME = 64
+
+
+
 User = get_user_model()
 
 
@@ -23,6 +30,7 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'тег'
         verbose_name_plural = 'Теги'
+        ordering = ('id', )
 
     def __str__(self):
         return self.name
@@ -31,17 +39,27 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(
         'Название',
-        max_length=64,
+        max_length=MAX_LENGHT_NAME,
     )
     measurement_unit = models.CharField(
         'Едиинца измерения',
-        max_length=32,
+        max_length=MAX_LENGHT_NAME,
         default='кг'
     )
 
     class Meta:
         verbose_name = 'ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        ordering = ('id', )
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    'name',
+                    'measurement_unit',
+                ],
+                name='unique_recipe_ingredient'
+            )
+        ]
 
     def __str__(self):
         return self.name
@@ -50,14 +68,16 @@ class Ingredient(models.Model):
 class IngredientIndividual(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE)
-    amount = models.IntegerField(
+    amount = models.PositiveSmallIntegerField(
         'Количество',
-        validators=[MinValueValidator(1, message="Минимум - 1 единица")]
+        validators=[MinValueValidator(MIN_VALUE, message=f"Минимум - {MIN_VALUE} eдиница"),
+                   MaxValueValidator(MAX_VALUE_TIME, message=f"Максимум - {MAX_VALUE_AMOUNT} единиц")]
     )
 
     class Meta:
         verbose_name = 'ингредиент определенного рецепта'
         verbose_name_plural = 'Ингредиенты определенного рецепта'
+        ordering = ('id', )
         constraints = [
             models.UniqueConstraint(
                 fields=[
@@ -68,19 +88,23 @@ class IngredientIndividual(models.Model):
             )
         ]
 
+    def __str__(self):
+        return f'({self.ingredient.name} в рецепте {self.recipe.name})
+
 
 class Recipe(models.Model):
     name = models.CharField(
         'Название',
-        max_length=200,
+        max_length=MAX_LENGHT_NAME_RECIPE,
     )
     text = models.TextField(
         'Описание',
-        max_length=1024,
+        max_length=MAX_LENGHT_TEXT,
     )
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=[MinValueValidator(1, message="Минимум - 1 минута")]
+        validators=[MinValueValidator(MIN_VALUE, message=f"Минимум - {MIN_VALUE} минута"),
+                   MaxValueValidator(MAX_VALUE_TIME, message=f"Максимум - {MAX_VALUE_TIME} минут")]
     )
     image = models.ImageField(
         'Картинка',
@@ -105,12 +129,12 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'рецепт'
         verbose_name_plural = 'Рецепты'
+        ordering = ('-created_at', )
 
     def __str__(self):
         return self.name
 
-
-class Favorites(models.Model):
+class BaseUserRecipe(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE,
     )
@@ -118,19 +142,19 @@ class Favorites(models.Model):
         Recipe, on_delete=models.CASCADE,
     )
 
+class Favorites(BaseUserRecipe):
+    
     class Meta:
+        default_related_name = 
         verbose_name = 'избранное'
         verbose_name_plural = 'Избранное'
+        ordering = ('id', )
 
 
-class ShoppingList(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE,
-    )
-    recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE,
-    )
-
+class ShoppingList(BaseUserRecipe):
+    
     class Meta:
+        default_related_name = 
         verbose_name = 'список покупок'
         verbose_name_plural = 'Cписок покупок'
+        ordering = ('id', )
