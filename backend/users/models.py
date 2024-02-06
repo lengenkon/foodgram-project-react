@@ -2,10 +2,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+MAX_lENGTH_USER = 150
+
 
 class CustomUser(AbstractUser):
-    first_name = models.CharField('Имя', max_length=150)
-    last_name = models.CharField('Фамилия', max_length=150)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name]
+    
+    first_name = models.CharField('Имя', max_length=MAX_lENGTH_USER)
+    last_name = models.CharField('Фамилия', max_length=MAX_lENGTH_USER)
     email = models.EmailField(
         'Электронная почта',
         unique=True,
@@ -13,9 +18,6 @@ class CustomUser(AbstractUser):
             'unique': 'A user with that email already exists.'
         },
     )
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -39,6 +41,9 @@ class Follow(models.Model):
         verbose_name = 'подписка'
         verbose_name_plural = 'Подписки'
         constraints = [
+            models.CheckConstraint(
+                check=Q(following__ne=F('user')),
+                name='subscribe_to_yourself')
             models.UniqueConstraint(
                 fields=['user', 'following'],
                 name='unique_following',
