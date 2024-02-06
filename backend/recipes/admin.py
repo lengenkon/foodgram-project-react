@@ -8,8 +8,6 @@ from users.models import Follow
 from .models import (Favorites, Ingredient, IngredientIndividual, Recipe,
                      ShoppingList, Tag)
 
-User = get_user_model()
-
 
 class IngredientIndividualInline(admin.TabularInline):
     model = IngredientIndividual
