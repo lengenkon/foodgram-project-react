@@ -8,7 +8,6 @@ from recipes.models import (Favorites, Ingredient, IngredientIndividual,
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from users.models import Follow
-from users.serializers import CustomUserSerializer
 
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer
