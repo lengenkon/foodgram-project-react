@@ -1,0 +1,7 @@
+User = get_user_model() 
+
+class UserAdmin(UserAdmin):
+    list_filter = ('first_name', 'email')
+
+
+admin.site.register(User, UserAdmin)
