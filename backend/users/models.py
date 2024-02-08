@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-MAX_lENGTH_USER = 150
+from django.db.models import Q, F
+from backend.constants import MAX_lENGTH_USER
 
 
 class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name]
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     first_name = models.CharField('Имя', max_length=MAX_lENGTH_USER)
     last_name = models.CharField('Фамилия', max_length=MAX_lENGTH_USER)
@@ -42,8 +42,8 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.CheckConstraint(
-                check=Q(following__ne=F('user')),
-                name='subscribe_to_yourself')
+                check=~Q(following=F('user')),
+                name='subscribe_to_yourself'),
             models.UniqueConstraint(
                 fields=['user', 'following'],
                 name='unique_following',

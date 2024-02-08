@@ -1,4 +1,5 @@
 import base64
+from drf_extra_fields.fields import Base64ImageField
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -15,6 +16,7 @@ from rest_framework import serializers
 from users.models import Follow
 
 User = get_user_model()
+
 
 class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
@@ -62,13 +64,13 @@ class IngredientIndividualSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount', 'name', 'measurement_unit')
 
 
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
+# class Base64ImageField(serializers.ImageField):
+#     def to_internal_value(self, data):
+#         if isinstance(data, str) and data.startswith('data:image'):
+#             format, imgstr = data.split(';base64,')
+#             ext = format.split('/')[-1]
+#             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+#         return super().to_internal_value(data)
 
 
 class RecipeGetSerializer(serializers.ModelSerializer):
@@ -89,12 +91,19 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         model = Recipe
 
     def get_is_favorited(self, obj):
-        if self.context['request'].user.is_authenticated:
-            current_user = User.objects.get(
-                username=self.context.get('request').user)
-            return Favorites.objects.filter(
-                recipe=obj.id, user=current_user.id).exists()
-        return False
+        current_user = User.objects.get(
+            username=self.context.get('request').user)
+        bool(
+            self.context.get(
+                'request') and self.context[
+                    'request'].user.is_authenticated and Favorites.objects.filter(
+                        recipe=obj.id, user=current_user.id))
+        # if self.context['request'].user.is_authenticated:
+        #     current_user = User.objects.get(
+        #         username=self.context.get('request').user)
+        #     return Favorites.objects.filter(
+        #         recipe=obj.id, user=current_user.id).exists()
+        # return False
 
     def get_is_in_shopping_cart(self, obj):
         if self.context['request'].user.is_authenticated:
@@ -103,6 +112,15 @@ class RecipeGetSerializer(serializers.ModelSerializer):
             return ShoppingList.objects.filter(
                 recipe=obj.id, user=current_user.id).exists()
         return False
+
+
+class RecipeCreateSerializer(RecipeGetSerializer):
+    class Meta:
+        fields = ('id', 'name', 'image', 'cooking_time',
+                  'text', 'ingredients', 'tags', 'author',
+                  'is_favorited', 'is_in_shopping_cart'
+                  )
+        model = Recipe
 
     def validate(self, data):
         data['tags'] = self.context['request'].data.get('tags', None)

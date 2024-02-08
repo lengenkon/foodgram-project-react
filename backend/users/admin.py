@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 
 User = get_user_model() 
 
+
 class UserAdmin(UserAdmin):
     list_filter = ('first_name', 'email')
 

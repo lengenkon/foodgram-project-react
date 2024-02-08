@@ -28,9 +28,7 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
 
     def get_permissions(self):
-        if (self.action == 'me') and (
-            self.request.user.is_authenticated is False
-        ):
+        if self.action == 'me':
             return (OwnerOnly(), )
         return super().get_permissions()
 
@@ -54,14 +52,14 @@ class CustomUserViewSet(UserViewSet):
 
     @subscribe.mapping.delete
     def subscribe_delete(self, request, id=None):
-        get_object_or_404(User, pk=id)
-        if Follow.objects.filter(user=request.user.id, following=id).exists():
-            instance = Follow.objects.get(user=request.user.id, following=id)
-            instance.delete()
-            return Response(status=HTTP_204_NO_CONTENT)
-        return Response(
-            {'errors': 'Пользователь не подписан'},
-            status=HTTP_400_BAD_REQUEST)
+        if not Follow.objects.filter(
+            user=request.user.id,
+            following=id
+        ).delete()[0]:
+            return Response(
+                {'errors': 'Пользователь не подписан'},
+                status=HTTP_400_BAD_REQUEST)
+        return Response(status=HTTP_204_NO_CONTENT)
 
     @action(
         methods=[
@@ -77,15 +75,15 @@ class CustomUserViewSet(UserViewSet):
         following = Follow.objects.select_related('following').filter(
             user=self.request.user)
         page = self.paginate_queryset(following)
-        if page is not None:
-            serializer = FollowSerializer(
-                page, many=True, context={'request': request})
-            return self.get_paginated_response(serializer.data)
+        # if page is not None:
         serializer = FollowSerializer(
-            following, many=True, context={'request': request})
-        return Response(
-            serializer.data,
-        )
+            page, many=True, context={'request': request})
+        return self.get_paginated_response(serializer.data)
+        # serializer = FollowSerializer(
+        #     following, many=True, context={'request': request})
+        # return Response(
+        #     serializer.data,
+        # )
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -133,13 +131,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
             pk=pk)
         if ShoppingList.objects.filter(
             recipe=recipe, user=request.user
-        ).exists():
-            instance = ShoppingList.objects.get(
-                recipe=recipe, user=request.user)
-            instance.delete()
+        ).delete()[0]:
             return Response(status=HTTP_204_NO_CONTENT)
-        return Response(status=HTTP_400_BAD_REQUEST,
-                        data={"errors": "Такого рецепта нет в списке покупок"})
+        return Response(
+            status=HTTP_400_BAD_REQUEST,
+            data={"errors": "Такого рецепта нет в списке покупок"}
+        )
 
     @action(
         methods=[
@@ -168,9 +165,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(
             Recipe,
             pk=pk)
-        if Favorites.objects.filter(recipe=recipe, user=request.user).exists():
-            instance = Favorites.objects.get(recipe=recipe, user=request.user)
-            instance.delete()
+        if Favorites.objects.filter(
+            recipe=recipe,
+            user=request.user
+        ).delete()[0]:
             return Response(status=HTTP_204_NO_CONTENT)
         return Response(status=HTTP_400_BAD_REQUEST,
                         data={"errors": "Такого рецепта нет в избранном"})
