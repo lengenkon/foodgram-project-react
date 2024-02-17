@@ -133,3 +133,5 @@ dmypy.json
 
 new_db_and_su
 create_new_user
+
+.vscode
