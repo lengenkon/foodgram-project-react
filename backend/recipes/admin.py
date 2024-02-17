@@ -8,7 +8,12 @@ from .models import (Favorites, Ingredient, IngredientIndividual, Recipe,
 
 
 class IngredientIndividualInline(admin.TabularInline):
+    def measurement_unit(self, obj):
+        return self.model.ingredient.measurement_unit
+
     model = IngredientIndividual
+    fields = ['ingredient', 'amount', 'measurement_unit']
+    readonly_fields = ('measurement_unit',)
     extra = 1
     min_num = 1
 

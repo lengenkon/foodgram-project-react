@@ -9,6 +9,7 @@ from backend.constants import (
     MAX_LENGHT_NAME,
 )
 
+
 User = get_user_model()
 
 
@@ -25,7 +26,6 @@ class Tag(models.Model):
     )
     color = ColorField(
         default='#FF0000',
-        # max_lenght=MAX_lENGHT_TAG_COLOR
     )
 
     class Meta:
@@ -114,7 +114,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         'Картинка',
-        upload_to='posts/', null=True, blank=True
+        upload_to='posts/',
     )
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='recipes'
@@ -124,13 +124,12 @@ class Recipe(models.Model):
         auto_now_add=True,
     )
     tags = models.ManyToManyField(
-        Tag, related_name='tags')
+        Tag, related_name='tags',
+    )
     ingredients = models.ManyToManyField(
-        Ingredient, through='IngredientIndividual', related_name='ingredients')
-    # is_favorited = models.ManyToManyField(
-    #     User, through='Favorites', related_name='favorites_recipes')
-    # is_shopping_list = models.ManyToManyField(
-    #     User, through='ShoppingList', related_name='recipes_in_shopping_list')
+        Ingredient, through='IngredientIndividual',
+        related_name='ingredients',
+    )
 
     class Meta:
         verbose_name = 'рецепт'
@@ -149,11 +148,14 @@ class BaseUserRecipe(models.Model):
         Recipe, on_delete=models.CASCADE,
     )
 
+    class Meta:
+        default_related_name = "%(app_label)s_%(class)s_related"
+        abstract = True
+
 
 class Favorites(BaseUserRecipe):
 
-    class Meta:
-        default_related_name = 'favorites'
+    class Meta():
         verbose_name = 'избранное'
         verbose_name_plural = 'Избранное'
         ordering = ('id', )
@@ -162,7 +164,6 @@ class Favorites(BaseUserRecipe):
 class ShoppingList(BaseUserRecipe):
 
     class Meta:
-        default_related_name = 'shopping_cart'
         verbose_name = 'список покупок'
         verbose_name_plural = 'Cписок покупок'
         ordering = ('id', )

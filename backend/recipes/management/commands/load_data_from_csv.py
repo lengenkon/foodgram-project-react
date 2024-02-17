@@ -48,22 +48,3 @@ class Command(BaseCommand):
                 }
                 objects_of_model.append(model(**object_dict))
             model.objects.bulk_create(objects_of_model)
-
-
-    # def handle(self, *args, **options):
-    #     file_path = 'static/data/' + options['file_name']
-    #     model = apps.get_model(
-    #         options['app_name'],
-    #         options['model_name'],
-    #     )
-    #     with open(file_path, 'r', encoding='utf-8') as csv_file:
-    #         reader = csv.reader(
-    #             csv_file,
-    #             delimiter=','
-    #         )
-    #         for row in reader:
-    #             object_dict = {
-    #                 'name': row[0],
-    #                 'measurement_unit': row[1],
-    #             }
-    #             model.objects.create(**object_dict)
