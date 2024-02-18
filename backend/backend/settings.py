@@ -16,7 +16,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split()
 
 STATIC_URL = '/static/'
 
-STATUC_ROOT = '/backend_static/static/'
+STATIC_ROOT = '/backend_static/static/'
 
 MEDIA_URL = '/media/'
 
