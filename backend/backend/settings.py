@@ -16,6 +16,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split()
 
 STATIC_URL = '/static/'
 
+STATUC_ROOT = '/backend_static/static/'
+
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = '/var/www/foodgram/media'
