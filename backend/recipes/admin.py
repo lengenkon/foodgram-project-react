@@ -29,7 +29,6 @@ class FollowAdmin(admin.ModelAdmin):
 
 class IngredientAdmin(admin.ModelAdmin):
     list_filter = ('name', )
-    inlines = (IngredientIndividualInline,)
     list_display = (
         'name', 'measurement_unit', 'id'
     )
@@ -49,11 +48,10 @@ class IngredientIndividualAdmin(admin.ModelAdmin):
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'name', 'author', 'ingredient_for_recipe',
-        'id', 'number_of_favorites'
+        'id', 'number_of_favorites', 'created_at'
     )
     list_filter = ('name', 'author', 'tags')
     inlines = (IngredientIndividualInline, )
-    ordering = ('-created_at', )
 
     def ingredient_for_recipe(self, obj):
         ingredients = obj.ingredients.values_list('name')

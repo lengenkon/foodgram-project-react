@@ -11,13 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key)
 
 DEBUG = os.getenv('DEBUG') == 'True'
-# DEBUG = True
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split()
 
 STATIC_URL = '/static/'
-
-STATIC_ROOT = '/backend_static/static/'
 
 MEDIA_URL = '/media/'
 
@@ -83,7 +80,7 @@ DATABASES = {
     }
 }
 
-if os.getenv('DATABASES') == 'True':
+if DEBUG:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',

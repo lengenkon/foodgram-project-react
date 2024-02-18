@@ -1,6 +1,7 @@
 from django_filters.rest_framework import (AllValuesMultipleFilter,
-                                           BooleanFilter, FilterSet)
-from recipes.models import Recipe
+                                           BooleanFilter, FilterSet,
+                                           CharFilter)
+from recipes.models import Recipe, Ingredient
 
 
 class RecipeFilter(FilterSet):
@@ -26,3 +27,15 @@ class RecipeFilter(FilterSet):
         if value and self.request.user.is_authenticated:
             return queryset.filter(favorites__user=self.request.user)
         return queryset
+
+
+class IngredientFilter(FilterSet):
+    name = CharFilter(
+        lookup_expr='startswith',
+    )
+
+    class Meta:
+        model = Ingredient
+        fields = (
+            'name',
+        )

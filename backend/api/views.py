@@ -5,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import (Favorites, Ingredient, IngredientIndividual,
                             Recipe, ShoppingList, Tag)
-from rest_framework import filters, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -13,7 +13,7 @@ from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
                                    HTTP_400_BAD_REQUEST)
 from users.models import Follow
 
-from .filters import RecipeFilter
+from .filters import IngredientFilter, RecipeFilter
 from .pagination import PaginationWithLimit
 from .permissions import OwnerOnly, OwnerOrReadOnly
 from .serializers import (CustomUserSerializer, FavoritesSerializer,
@@ -176,13 +176,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         recipes_in_shopping_list = Recipe.objects.filter(
             shoppinglist__user=self.request.user)
         for recipe in recipes_in_shopping_list:
-            print(f'Для блюда "{recipe.name}" понадобится:', file=sourceFile)
+            sourceFile.write(f'Для блюда "{recipe.name}" понадобится:\n')
             ingridients = IngredientIndividual.objects.filter(recipe=recipe)
             for i in ingridients:
-                print(
+                sourceFile.write(
                     f'{i.ingredient.name} - {i.amount} '
-                    f'{i.ingredient.measurement_unit}',
-                    file=sourceFile)
+                    f'{i.ingredient.measurement_unit}\n'
+                )
         sourceFile.close()
         return FileResponse(open(filepath, 'rb'))
 
@@ -194,16 +194,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerilizer
-    filter_backends = (filters.SearchFilter, )
-    search_fields = ('name', )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
     pagination_class = None
-
-    def get_queryset(self):
-        queryset = Ingredient.objects.all()
-        name = self.request.query_params.get('name', None)
-        if name is not None:
-            #  через ORM отфильтровать объекты модели Cat
-            #  по значению параметра color, полученного в запросе
-            queryset = queryset.filter(name=name)
-        return queryset
