@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from users.models import Follow
 
-from .utils import get_field, bulk_create_objects
+from .utils import bulk_create_objects, get_field
 
 User = get_user_model()
 
