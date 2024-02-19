@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -171,18 +172,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         filename = 'test.txt'
-        filepath = 'static/data/' + filename
+        filepath = 'backend/static/data/' + filename
         sourceFile = open(filepath, 'w', encoding='utf-8')
         recipes_in_shopping_list = Recipe.objects.filter(
             shoppinglist__user=self.request.user)
-        for recipe in recipes_in_shopping_list:
-            sourceFile.write(f'Для блюда "{recipe.name}" понадобится:\n')
-            ingridients = IngredientIndividual.objects.filter(recipe=recipe)
-            for i in ingridients:
+        sourceFile.write('Для приготовления понадобится:\n')
+        ingredients = IngredientIndividual.objects.filter(
+            recipe=recipes_in_shopping_list[0])
+        for recipe in recipes_in_shopping_list[1:]:
+            ingredients = ingredients | IngredientIndividual.objects.filter(
+                recipe=recipe)
+        ingredient_array = []
+        for i in ingredients:
+            if i.ingredient not in ingredient_array:
+                amount = ingredients.filter(
+                    ingredient=i.ingredient).aggregate(res=Sum('amount'))
                 sourceFile.write(
-                    f'{i.ingredient.name} - {i.amount} '
-                    f'{i.ingredient.measurement_unit}\n'
+                    f"{i.ingredient.name} - {amount['res']} "
+                    f"{i.ingredient.measurement_unit}\n"
                 )
+            ingredient_array.append(i.ingredient)
         sourceFile.close()
         return FileResponse(open(filepath, 'rb'))
 

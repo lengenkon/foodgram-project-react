@@ -7,7 +7,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from users.models import Follow
 
-from .utils import bulk_create_objects, get_field
+from .utils import get_field
 
 User = get_user_model()
 
@@ -42,7 +42,18 @@ class IngredientSerilizer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class IngredientForRecipeSerializer(serializers.ModelSerializer):
+class IngredientIndividualSerializerGet(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True, source='ingredient.name')
+    measurement_unit = serializers.CharField(
+        read_only=True, source='ingredient.measurement_unit')
+    id = serializers.IntegerField(source='ingredient.id')
+
+    class Meta:
+        model = IngredientIndividual
+        fields = ('id', 'amount', 'name', 'measurement_unit')
+
+
+class IngredientIndividualSerializerCreate(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
     )
@@ -51,21 +62,13 @@ class IngredientForRecipeSerializer(serializers.ModelSerializer):
         model = IngredientIndividual
         fields = ('id', 'amount')
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['name'] = instance.ingredient.name
-        representation[
-            'measurement_unit'
-        ] = instance.ingredient.measurement_unit
-        return representation
-
 
 class RecipeGetSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = CustomUserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    ingredients = IngredientForRecipeSerializer(
+    ingredients = IngredientIndividualSerializerGet(
         many=True,
         source='ingredientindividual_set',
     )
@@ -85,20 +88,34 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         return get_field(self, obj, ShoppingList, 'recipe')
 
 
-class RecipeSerializerCreate(RecipeGetSerializer):
+class RecipeSerializerCreate(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all(),
     )
     author = serializers.HiddenField(
         default=serializers.CurrentUserDefault())
+    ingredients = IngredientIndividualSerializerCreate(
+        many=True,
+        source='ingredientindividual_set',
+    )
+    image = Base64ImageField(required=True)
 
     class Meta:
         fields = ('id', 'name', 'image', 'cooking_time',
                   'text', 'ingredients', 'tags', 'author',
-                  'is_favorited', 'is_in_shopping_cart'
                   )
         model = Recipe
+
+    def bulk_create_objects(self, ingredients, recipe):
+        objects_of_model = [
+            IngredientIndividual(
+                recipe=recipe,
+                ingredient=i['id'],
+                amount=i['amount']
+            ) for i in ingredients
+        ]
+        IngredientIndividual.objects.bulk_create(objects_of_model)
 
     def validate_image(self, value):
         if not value:
@@ -128,7 +145,7 @@ class RecipeSerializerCreate(RecipeGetSerializer):
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
-        bulk_create_objects(ingredients, recipe, IngredientIndividual)
+        self.bulk_create_objects(ingredients, recipe)
         return recipe
 
     def update(self, instance, validated_data):
@@ -138,7 +155,7 @@ class RecipeSerializerCreate(RecipeGetSerializer):
         instance.tags.clear()
         instance.tags.set(tags)
         instance.ingredients.clear()
-        bulk_create_objects(ingredients, instance, IngredientIndividual)
+        self.bulk_create_objects(ingredients, instance)
         instance.save()
         return instance
 
@@ -194,12 +211,14 @@ class FollowSerializer(CustomUserSerializer):
         recipes = Recipe.objects.filter(
             author=obj).order_by('-created_at')
         try:
-            page_size = int(self.context['request'].query_params.get(
-                'recipes_limit'))
-        except (ValueError, TypeError):
+            recipes = recipes[
+                :int(self.context['request'].query_params.get(
+                    'recipes_limit'))
+            ]
+# Если нет параметра, то None - TypeError, а если не int - ValueError
+# Если нет параметра, то передается в сериализатор список рецептов без среза
+        except (TypeError, ValueError):
             pass
-        else:
-            recipes = recipes[:page_size]
         serializer = RecipeSerializer(recipes, many=True)
         return serializer.data
 
