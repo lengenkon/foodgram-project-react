@@ -172,7 +172,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         filename = 'test.txt'
-        filepath = 'backend/static/data/' + filename
+        filepath = 'static/data/' + filename
         sourceFile = open(filepath, 'w', encoding='utf-8')
         recipes_in_shopping_list = Recipe.objects.filter(
             shoppinglist__user=self.request.user)
