@@ -21,12 +21,16 @@
 1. Установите Docker
 Полезные ссылки:
 Для Windows:
+
 https://learn.microsoft.com/ru-ru/windows/wsl/install
 https://www.docker.com/products/docker-desktop/
+
 Для Linux
+
 https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script
+
 Запустите сервис.
-2. Склонируйте репозиторий.
+3. Склонируйте репозиторий.
 ```
 git clone git@github.com:lengenkon/foodgram-project-react.git
 ```
