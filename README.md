@@ -2,11 +2,8 @@
 **https://foodgramstudy.hopto.org**
 
 **Фудграм** — сайт, на котором можно регистрироваться, публиковать рецепты,
-
 добавлять рецепты в избранное и подписываться на публикации других авторов.
-
 Также доступен сервис «Список покупок».
-
 Он позволит создавать список продуктов, которые нужно купить для приготовления выбранных блюд.
 
 **Используемые технологии**
@@ -21,41 +18,40 @@
 
 **Развертывание проекта с помощью Docker**
 
-1. Установите Docker.
+1. Установите Docker
+Полезные ссылки:
 Для Windows:
-Установить Windows Subsystem for Linux (WSL)
-Скачать 
+https://learn.microsoft.com/ru-ru/windows/wsl/install
 https://www.docker.com/products/docker-desktop/
 Для Linux
 https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script
 Запустите сервис.
-
-3. Склонируйте репозиторий.
+2. Склонируйте репозиторий.
 ```
 git clone git@github.com:lengenkon/foodgram-project-react.git
 ```
-4. Запустите проект
+3. Запустите проект
 ```
-sudo docker compose -f docker-compose.production.yml up
+sudo docker compose up
 ```
-6. Выполните миграции
+4. Выполните миграции
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+sudo docker compose exec backend python manage.py migrate
 ```
-8. Соберите статические файлы бэкэнда.
+5. Соберите статические файлы бэкэнда.
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
+sudo docker compose exec backend python manage.py collectstatic --no-input
 ```
-10. Создайте суперпользователя.
+6. Создайте суперпользователя.
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py createsuperuser
+sudo docker compose exec backend python manage.py createsuperuser
 ```
-12. Загрузите данные.
+7. Загрузите данные.
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_data_from_csv --file_name ingredients.csv --model_name Ingredient --app_name recipes
+sudo docker compose exec backend python manage.py load_data_from_csv --file_name ingredients.csv --model_name Ingredient --app_name recipes
 ```
 ```
-sudo docker compose -f docker-compose.production.yml exec backend python manage.py load_data_from_csv --file_name tags.csv --model_name Tag --app_name recipes
+sudo docker compose exec backend python manage.py load_data_from_csv --file_name tags.csv --model_name Tag --app_name recipes
 ```
 
 **Документация API**
@@ -72,11 +68,37 @@ docker compose up
   + Пример ответа:
   ```
   {
+    "id": 0,
+    "tags": [
+      {
+        "id": 0,
+        "name": "Завтрак",
+        "color": "#E26C2D",
+        "slug": "breakfast"
+      }
+    ],
+    "author": {
+      "email": "user@example.com",
       "id": 0,
-      "text": "string",
-      "author": "string",
-      "score": 1,
-      "pub_date": "2019-08-24T14:15:22Z"
+      "username": "string",
+      "first_name": "Вася",
+      "last_name": "Пупкин",
+      "is_subscribed": false
+    },
+    "ingredients": [
+      {
+        "id": 0,
+        "name": "Картофель отварной",
+        "measurement_unit": "г",
+        "amount": 1
+      }
+    ],
+    "is_favorited": true,
+    "is_in_shopping_cart": true,
+    "name": "string",
+    "image": "http://foodgram.example.org/media/recipes/images/image.jpeg",
+    "text": "string",
+    "cooking_time": 1
   }
   ```
 + `POST api/recipes/` - адрес для POST-запроса для создания нового рецепта;
