@@ -21,8 +21,16 @@
 
 **Развертывание проекта с помощью Docker**
 
-1. Установите Docker. ______ Запустите сервис.
-2. Склонируйте репозиторий.
+1. Установите Docker.
+Для Windows:
+Установить Windows Subsystem for Linux (WSL)
+Скачать 
+https://www.docker.com/products/docker-desktop/
+Для Linux
+https://docs.docker.com/engine/install/ubuntu/#install-using-the-convenience-script
+Запустите сервис.
+
+3. Склонируйте репозиторий.
 ```
 git clone git@github.com:lengenkon/foodgram-project-react.git
 ```
@@ -56,9 +64,10 @@ sudo docker compose -f docker-compose.production.yml exec backend python manage.
 ```
 docker compose up
 ```
-Документация станет доступна по адресу: http://localhost/api/docs/
+Документация доступна по адресу: http://localhost/api/docs/
 
 **Примеры запросов и ответов**
+
 + `GET api/recipes/{recipes_id}/` - адрес для GET, PATCH и DELETE-запросов для, соответственно, получения, частичного редактирования и удаления рецепта;
   + Пример ответа:
   ```
@@ -88,4 +97,5 @@ docker compose up
   ```
 
 **Автор**
+
 https://github.com/lengenkon
